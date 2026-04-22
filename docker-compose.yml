@@ -1,0 +1,44 @@
+# docker-compose.yml — Task Manager full stack
+# Run:  docker compose up --build
+# Visit: http://localhost:8080
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: tasks
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d tasks"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Expose on a non-default host port so it doesn't clash with a local Postgres
+    ports:
+      - "5433:5432"
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgres://app:secret@db:5432/tasks
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    # The backend is NOT published to the host directly.
+    # The frontend (nginx) proxies /api/ to it over the internal Docker network.
+    expose:
+      - "3000"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  db_data:
