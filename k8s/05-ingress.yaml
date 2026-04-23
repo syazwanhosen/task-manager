@@ -1,0 +1,29 @@
+# Ingress routes external HTTP traffic into the cluster.
+#
+# For local development:
+#   - minikube: run "minikube addons enable ingress", then "minikube tunnel"
+#   - kind:     install an ingress controller (e.g. ingress-nginx)
+#   - Docker Desktop: Kubernetes has ingress-nginx available as an add-on
+#
+# If you don't want to set up an Ingress controller, skip this file and
+# use port-forwarding instead (see README).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: task-manager
+  namespace: task-manager
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: task-manager.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

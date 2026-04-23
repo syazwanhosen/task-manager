@@ -1,0 +1,22 @@
+# Non-sensitive config: DB name and username.
+# Consumed by both the Postgres pod and the backend pod.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  namespace: task-manager
+data:
+  POSTGRES_DB: tasks
+  POSTGRES_USER: app
+---
+# Sensitive config: the database password.
+# In real life: never commit real secrets to git — use sealed-secrets,
+# external-secrets, or your cloud provider's secret manager.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: task-manager
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: secret

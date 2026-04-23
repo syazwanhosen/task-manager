@@ -62,21 +62,34 @@ docker compose down -v
 
 ```
 task-manager/
-├── docker-compose.yml
+├── docker-compose.yml       # Run locally with Docker Compose
 ├── backend/
 │   ├── Dockerfile
 │   ├── .dockerignore
 │   ├── package.json
 │   └── src/
 │       └── server.js        # Express API (CRUD for tasks)
-└── frontend/
-    ├── Dockerfile
-    ├── nginx.conf
-    └── src/
-        ├── index.html
-        ├── app.jsx          # React component
-        └── styles.css
+├── frontend/
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── src/
+│       ├── index.html
+│       ├── app.jsx          # React component
+│       └── styles.css
+└── k8s/                     # Same app, running on Kubernetes
+    ├── 00-namespace.yaml
+    ├── 01-db-config.yaml
+    ├── 02-db.yaml
+    ├── 03-backend.yaml
+    ├── 04-frontend.yaml
+    ├── 05-ingress.yaml
+    ├── 06-hpa.yaml
+    └── README.md
 ```
+
+## Want to run it on Kubernetes?
+
+See [`k8s/README.md`](./k8s/README.md) for manifests and step-by-step instructions for minikube, kind, or Docker Desktop.
 
 ---
 

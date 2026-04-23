@@ -1,0 +1,81 @@
+# Backend Deployment — 2 replicas for basic high availability.
+# Kubernetes will keep 2 pods running; if one crashes or its node dies,
+# it's automatically replaced.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: task-manager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: task-manager-backend:local   # build locally, see README
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: PORT
+              value: "3000"
+            # Build DATABASE_URL from the ConfigMap + Secret
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: POSTGRES_USER
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: POSTGRES_DB
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgres://$(DB_USER):$(DB_PASSWORD)@db:5432/$(DB_NAME)"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+# Service gives the backend a stable name ("backend") that the frontend
+# (or any other pod in the namespace) can use. Traffic is load-balanced
+# across the 2 replicas automatically.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: task-manager
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http

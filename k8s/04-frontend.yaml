@@ -1,0 +1,53 @@
+# Frontend Deployment — Nginx serving the React app and proxying /api/
+# to the backend Service. The nginx.conf already proxies to "backend:3000",
+# which resolves to the Service we defined in 03-backend.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: task-manager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: task-manager-frontend:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+---
+# Frontend Service. Inside the cluster, other pods could reach it at
+# "frontend". We expose it to the outside world via the Ingress below.
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: task-manager
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http

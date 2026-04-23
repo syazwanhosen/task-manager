@@ -1,0 +1,22 @@
+# HorizontalPodAutoscaler — automatically scales the backend from 2 up to
+# 5 replicas when average CPU usage across pods exceeds 70% of the request.
+# Requires the metrics-server addon in your cluster.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend
+  namespace: task-manager
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

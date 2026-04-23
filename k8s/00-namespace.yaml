@@ -1,0 +1,6 @@
+# Groups all Task Manager resources into one namespace so they're easy to find
+# and clean up: kubectl delete ns task-manager
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: task-manager

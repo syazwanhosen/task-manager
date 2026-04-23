@@ -1,0 +1,67 @@
+# StatefulSet for Postgres so the pod has a stable identity and its own
+# persistent volume. Using StatefulSet (rather than Deployment) is the
+# normal choice for databases in Kubernetes.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: task-manager
+spec:
+  serviceName: db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          envFrom:
+            - configMapRef:
+                name: db-config
+            - secretRef:
+                name: db-secret
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres   # avoids Postgres complaining about lost+found
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "app", "-d", "tasks"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "app", "-d", "tasks"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+# Headless-friendly ClusterIP Service. Other pods reach Postgres at
+# "db.task-manager.svc.cluster.local" or just "db" from inside the namespace.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: task-manager
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
