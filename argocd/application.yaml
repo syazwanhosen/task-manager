@@ -1,0 +1,43 @@
+# Argo CD Application — tells Argo to sync the Helm chart in this repo
+# to the cluster continuously. Apply once to the argocd namespace:
+#
+#   kubectl apply -f argocd/application.yaml
+#
+# After this, any git push to the tracked branch/path gets auto-deployed.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: task-manager
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # Replace with YOUR git URL once pushed
+    repoURL: https://github.com/your-org/task-manager.git
+    targetRevision: main
+    path: helm/task-manager
+    helm:
+      # Pick which values files Argo should use (layered on defaults)
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc   # in-cluster
+    namespace: task-manager
+
+  syncPolicy:
+    automated:
+      prune: true       # delete resources removed from git
+      selfHeal: true    # revert manual changes in the cluster
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

@@ -1,0 +1,21 @@
+# Production overrides — bigger replica counts, tighter limits, real host.
+# Apply with: helm upgrade --install task-manager ./helm/task-manager -f values-prod.yaml
+
+backend:
+  replicaCount: 4
+  resources:
+    requests: { cpu: "200m", memory: "256Mi" }
+    limits:   { cpu: "1",    memory: "512Mi" }
+  autoscaling:
+    minReplicas: 4
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 60
+
+frontend:
+  replicaCount: 3
+
+db:
+  storageSize: 20Gi
+
+ingress:
+  host: tasks.example.com

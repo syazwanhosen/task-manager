@@ -89,7 +89,15 @@ task-manager/
 
 ## Want to run it on Kubernetes?
 
-See [`k8s/README.md`](./k8s/README.md) for manifests and step-by-step instructions for minikube, kind, or Docker Desktop.
+See [`k8s/README.md`](./k8s/README.md) for plain manifests (minikube / kind / Docker Desktop).
+
+## Advanced Kubernetes layers
+
+Three optional layers sit on top of the plain manifests:
+
+- **[`helm/`](./helm/task-manager)** — the same resources, packaged as a parameterised Helm chart with per-environment values files (`values.yaml`, `values-prod.yaml`).
+- **[`argocd/`](./argocd)** — GitOps setup. An Argo CD Application watches this repo and keeps the cluster in sync with git.
+- **[`observability/`](./observability)** — Prometheus + Grafana + Loki installed with their official Helm charts, plus a custom RED (Rate/Errors/Duration) dashboard for the backend. The backend exposes `/metrics` in Prometheus format.
 
 ---
 

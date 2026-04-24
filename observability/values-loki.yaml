@@ -1,0 +1,15 @@
+# grafana/loki-stack overrides
+# Install with:
+#   helm install loki grafana/loki-stack -n monitoring -f values-loki.yaml
+
+loki:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 5Gi
+
+promtail:
+  enabled: true      # runs as a DaemonSet, tails every pod's logs
+
+grafana:
+  enabled: false     # using the one from kube-prometheus-stack instead

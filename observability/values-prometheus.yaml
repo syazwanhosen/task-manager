@@ -1,0 +1,39 @@
+# kube-prometheus-stack overrides
+# Install with:
+#   helm install kps prometheus-community/kube-prometheus-stack \
+#     -n monitoring -f values-prometheus.yaml
+
+prometheus:
+  prometheusSpec:
+    # Pick up ServiceMonitors from all namespaces
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+    # Extra scrape config: honour prometheus.io/* annotations on pods
+    additionalScrapeConfigs:
+      - job_name: "kubernetes-pods"
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels:
+              - __address__
+              - __meta_kubernetes_pod_annotation_prometheus_io_port
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+
+grafana:
+  adminPassword: admin   # change me in real installs
+  defaultDashboardsEnabled: true

@@ -1,0 +1,21 @@
+# Optional: an AppProject restricts what a set of Applications can do.
+# In a real org you'd scope source repos, destination namespaces, and
+# which kinds of resources Applications in this project may create.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: task-manager
+  namespace: argocd
+spec:
+  description: Task Manager GitOps project
+  sourceRepos:
+    - https://github.com/your-org/task-manager.git
+  destinations:
+    - namespace: task-manager
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

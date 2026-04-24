@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const { metricsMiddleware, renderMetrics } = require("./metrics");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(metricsMiddleware);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -36,6 +38,12 @@ async function initDb(retries = 10) {
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+// Prometheus metrics endpoint
+app.get("/metrics", (_req, res) => {
+  res.set("Content-Type", "text/plain; version=0.0.4");
+  res.send(renderMetrics());
 });
 
 // List tasks

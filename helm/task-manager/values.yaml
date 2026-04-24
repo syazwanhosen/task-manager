@@ -1,0 +1,51 @@
+# Default values for task-manager chart.
+# Override per environment with -f values-dev.yaml / -f values-prod.yaml.
+
+namespace: task-manager
+
+backend:
+  image:
+    repository: task-manager-backend
+    tag: local
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: { cpu: "50m",  memory: "64Mi" }
+    limits:   { cpu: "500m", memory: "256Mi" }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+frontend:
+  image:
+    repository: task-manager-frontend
+    tag: local
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: { cpu: "25m",  memory: "32Mi" }
+    limits:   { cpu: "200m", memory: "128Mi" }
+
+db:
+  image:
+    repository: postgres
+    tag: 16-alpine
+  storageSize: 1Gi
+  database: tasks
+  username: app
+  # Password is looked up from an existing Secret for safety
+  existingSecret: db-secret
+  existingSecretPasswordKey: POSTGRES_PASSWORD
+
+ingress:
+  enabled: true
+  className: nginx
+  host: task-manager.local
+
+# Observability — scraped by Prometheus when enabled
+metrics:
+  enabled: true
+  port: 3000
+  path: /metrics
